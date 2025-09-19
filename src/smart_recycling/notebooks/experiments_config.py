@@ -1,28 +1,35 @@
-import tensorflow as tf 
+import tensorflow as tf
+
 
 class CommonConfig:
     SEED = 42
 
+
 class MlflowConfig:
     MLFLOW_TRACKING_URI = "http://localhost:5000"
-    ENABLE_SYSTEM_METRICS_LOGGING = True
-    MLFLOW_EXPERIMENT_NAME = "Smart_Recycling"
-    MLFLOW_RUN_NAME = "baseline"
+    ENABLE_SYSTEM_METRICS_LOGGING = False
+    MLFLOW_EXPERIMENT_NAME = "Smart_Recycling_AI"
+    MLFLOW_RUN_NAME = "baseline_test"
+
+    MLFLOW_RUN_DESCRIPTION = "Just a test run with the baseline configuration."
+
     MLFLOW_TENSORFLOW_AUTOLOG_CONFIG = {
-        "log_models": True,
-        "log_datasets": True,
+        "log_models": False,
+        "log_datasets": False,
         "keras_model_kwargs": {"save_format": "keras"},
         "log_model_signatures": True,
         "registered_model_name": None,
-        "checkpoint": True, 
+        "checkpoint": True,
         "checkpoint_monitor": "val_loss",
         "checkpoint_mode": "min",
         "checkpoint_save_best_only": True,
         "checkpoint_save_weights_only": False,
     }
 
+
 class DatasetConfig:
-    DATASET_FOLDER = "/home/ubuntu/dev/smart_recycling/garbage-dataset-v1"
+    DATASET = "garbage-dataset-v1"
+    DATASET_FOLDER = f"/home/ubuntu/dev/smart_recycling/{DATASET}"
     IMAGE_SIZE = (224, 224)
     TRAIN_BATCH_SIZE = 32
     VALIDATION_BATCH_SIZE = 32
@@ -33,15 +40,14 @@ class DatasetConfig:
 class ModelConfig:
     ENABLE_MIXED_PRECISION = True
 
-    BASE_MODEL = tf.keras.applications.MobileNetV3Large(
+    BACKBONE = tf.keras.applications.MobileNetV3Large(
         include_top=False,
         weights="imagenet",
         input_shape=(224, 224, 3),
         pooling=None,
         include_preprocessing=True,
     )
-
-    BASE_MODEL_TRAINABLE = False
+    BACKBONE.trainable = False
 
     MODEL = tf.keras.Sequential(
         [
@@ -51,7 +57,7 @@ class ModelConfig:
             tf.keras.layers.RandomZoom(0.12, seed=42),
             tf.keras.layers.RandomContrast(0.12, seed=42),
             tf.keras.layers.RandomBrightness(0.12, seed=42),
-            BASE_MODEL,
+            BACKBONE,
             tf.keras.layers.GlobalAveragePooling2D(),
             tf.keras.layers.Dense(8, activation="softmax", dtype="float32"),
         ]
@@ -65,32 +71,24 @@ class ModelConfig:
 class ModelTrainingConfig:
     EPOCHS = 50
 
-    COMPUTE_CLASS_WEIGHTS = True 
-    CLASS_WEIGHT = "balanced"
+    COMPUTE_CLASS_WEIGHTS = True
+    CLASS_WEIGHTING_METHOD = "balanced"
 
     EARLY_STOPPING_CALLBACK = tf.keras.callbacks.EarlyStopping(
-        monitor="val_loss",
-        patience=10,
-        restore_best_weights=True
+        monitor="val_loss", patience=10, restore_best_weights=True
     )
 
     REDUCE_LR_ON_PLATEAU_CALLBACK = tf.keras.callbacks.ReduceLROnPlateau(
-        monitor="val_loss",
-        factor=0.1,
-        patience=5,
-        min_lr=1e-7
+        monitor="val_loss", factor=0.1, patience=5, min_lr=1e-7
     )
 
-    TRAINING_CALLBACKS = [
-        EARLY_STOPPING_CALLBACK,
-        REDUCE_LR_ON_PLATEAU_CALLBACK
-    ]
+    TRAINING_CALLBACKS = [EARLY_STOPPING_CALLBACK, REDUCE_LR_ON_PLATEAU_CALLBACK]
 
 
 class ModelEvaluationConfig:
-    SAVE_MODEL_HISTORY = True 
+    SAVE_MODEL_HISTORY = True
 
     INCLUDE_EVALUATION_ON_TEST_SET = True
-    SAVE_PREDICTION_TIME = True 
+    SAVE_PREDICTION_TIME = True
     SAVE_CONFUSION_MATRIX = True
     SAVE_PREDICTION_CSV = True

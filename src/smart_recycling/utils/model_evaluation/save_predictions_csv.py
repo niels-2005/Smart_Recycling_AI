@@ -1,6 +1,6 @@
 import pandas as pd
 import mlflow
-from smart_r.utils.logging import get_configured_logger
+from smart_recycling.utils.logging import get_configured_logger
 
 _logger = get_configured_logger()
 
